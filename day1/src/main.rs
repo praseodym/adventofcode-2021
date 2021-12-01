@@ -1,7 +1,12 @@
+#![feature(test)]
+
+extern crate test;
+
 use std::collections::VecDeque;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use test::Bencher;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let file = File::open("input")?;
@@ -43,4 +48,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Second answer: {}", increments_2);
 
     Result::Ok(())
+}
+
+#[bench]
+fn bench(b: &mut Bencher) {
+    b.iter(main);
 }
