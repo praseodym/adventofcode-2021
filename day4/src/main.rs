@@ -1,3 +1,5 @@
+#![feature(drain_filter)]
+
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 
@@ -30,13 +32,25 @@ fn main() {
         cards.push(card);
     }
 
-    'outer: for draw in draws {
-        for card in cards.iter_mut() {
+    let mut first = None;
+    let mut last = 0;
+    for draw in draws {
+        cards.drain_filter(|card| {
             if let Some(score) = card.mark(draw) {
-                assert_eq!(score, 38913);
-                println!("score: {}", score);
-                break 'outer;
+                if first.is_none() {
+                    first = Some(score)
+                }
+                last = score;
+                true
+            } else {
+                false
             }
-        }
+        });
     }
+
+    let first = first.unwrap();
+    assert_eq!(first, 38913);
+    assert_eq!(last, 16836);
+    println!("first to score: {}", first);
+    println!("last to score: {}", last);
 }
