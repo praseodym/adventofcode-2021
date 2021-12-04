@@ -36,22 +36,17 @@ impl BingoCard {
     }
 
     fn check_bingo(&self) -> Option<i32> {
-        for row in 0..5 {
-            if self.mark[row][0]
-                && self.mark[row][1]
-                && self.mark[row][2]
-                && self.mark[row][3]
-                && self.mark[row][4]
-            {
-                return Some(self.sum_unmarked());
-            }
-        }
-        for col in 0..5 {
-            if self.mark[0][col]
-                && self.mark[1][col]
-                && self.mark[2][col]
-                && self.mark[3][col]
-                && self.mark[4][col]
+        for i in 0..5 {
+            if (self.mark[i][0]
+                && self.mark[i][1]
+                && self.mark[i][2]
+                && self.mark[i][3]
+                && self.mark[i][4])
+                || (self.mark[0][i]
+                    && self.mark[1][i]
+                    && self.mark[2][i]
+                    && self.mark[3][i]
+                    && self.mark[4][i])
             {
                 return Some(self.sum_unmarked());
             }

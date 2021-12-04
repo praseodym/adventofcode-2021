@@ -3,3 +3,6 @@
 members = [
 	"day*",
 ]
+
+[profile.release]
+lto = true
