@@ -1,19 +1,15 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::time::Instant;
 
 fn main() {
     let now = Instant::now();
 
-    let file = File::open("input").unwrap();
-    let mut reader = BufReader::new(file);
+    let input = include_str!("../input");
 
     type Fishies = [u64; 9];
     let mut fishies: Fishies = Default::default();
 
-    let mut buf: String = String::new();
-    reader.read_line(&mut buf).unwrap();
-    buf.trim_end()
+    input
+        .trim_end()
         .split(',')
         .map(|n| n.parse::<usize>().unwrap())
         .for_each(|f| fishies[f] += 1);
