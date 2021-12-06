@@ -1,7 +1,10 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::time::Instant;
 
 fn main() {
+    let now = Instant::now();
+
     let file = File::open("input").unwrap();
     let mut reader = BufReader::new(file);
 
@@ -36,4 +39,7 @@ fn main() {
             println!("fishies on day {}: {}", day, sum);
         }
     }
+
+    let elapsed_time = now.elapsed();
+    println!("done in {} microseconds", elapsed_time.as_micros());
 }

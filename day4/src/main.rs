@@ -2,12 +2,15 @@
 
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
+use std::time::Instant;
 
 use crate::bingo::BingoCard;
 
 mod bingo;
 
 fn main() {
+    let now = Instant::now();
+
     let file = File::open("input").unwrap();
     let mut reader = BufReader::new(file);
 
@@ -53,4 +56,7 @@ fn main() {
     assert_eq!(last, 16836);
     println!("first to score: {}", first);
     println!("last to score: {}", last);
+
+    let elapsed_time = now.elapsed();
+    println!("done in {} microseconds", elapsed_time.as_micros());
 }
