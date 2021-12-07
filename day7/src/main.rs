@@ -10,8 +10,8 @@ fn main() {
         .map(|n| n.parse::<i32>().unwrap())
         .collect();
 
-    let mut cheapest_fuel_part1 = 0i32;
-    let mut cheapest_fuel_part2 = 0i32;
+    let mut cheapest_fuel_part1 = i32::MAX;
+    let mut cheapest_fuel_part2 = i32::MAX;
 
     for target_position in 0..1000 {
         let mut fuel_part1 = 0i32;
@@ -23,13 +23,8 @@ fn main() {
                 fuel_part2 += d;
             }
         }
-        if target_position == 0 {
-            cheapest_fuel_part1 = fuel_part1;
-            cheapest_fuel_part2 = fuel_part2;
-        } else {
-            cheapest_fuel_part1 = cmp::min(cheapest_fuel_part1, fuel_part1);
-            cheapest_fuel_part2 = cmp::min(cheapest_fuel_part2, fuel_part2);
-        }
+        cheapest_fuel_part1 = cmp::min(cheapest_fuel_part1, fuel_part1);
+        cheapest_fuel_part2 = cmp::min(cheapest_fuel_part2, fuel_part2);
     }
 
     println!("cheapest part 1: {:?} fuel", cheapest_fuel_part1);
