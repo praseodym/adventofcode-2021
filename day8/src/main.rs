@@ -27,42 +27,29 @@ fn main() {
 
         let mut mapping: HashMap<char, char> = HashMap::new();
         for (c, n) in signals_occurences {
-            match n {
-                4 => {
-                    mapping.insert(c, 'e');
-                }
-                6 => {
-                    mapping.insert(c, 'b');
-                }
+            let m = match n {
+                4 => 'e',
+                6 => 'b',
                 7 => {
                     // d and g occurs 7 times - d is in 4 (len 4), g is not
                     match signals_sorted[2].chars().find(|&p| p == c) {
-                        Some(_) => {
-                            mapping.insert(c, 'd');
-                        }
-                        None => {
-                            mapping.insert(c, 'g');
-                        }
+                        Some(_) => 'd',
+                        None => 'g',
                     }
                 }
                 8 => {
                     // a and c occur 8 times - a is not in 1 (len 2), c is
                     match signals_sorted[0].chars().find(|&p| p == c) {
-                        Some(_) => {
-                            mapping.insert(c, 'c');
-                        }
-                        None => {
-                            mapping.insert(c, 'a');
-                        }
+                        Some(_) => 'c',
+                        None => 'a',
                     }
                 }
-                9 => {
-                    mapping.insert(c, 'f');
-                }
+                9 => 'f',
                 _ => {
-                    panic!("unexpected: {} {}", c, n);
+                    panic!("{} occurred {} times", c, n);
                 }
-            }
+            };
+            mapping.insert(c, m);
         }
 
         let outputs = s.next().unwrap().trim().split(' ');
@@ -100,7 +87,7 @@ fn main() {
                 }
                 "abcdfg" => "9",
                 _ => {
-                    panic!("unexpected: {}", new);
+                    panic!("unknown segment combination: {}", new);
                 }
             }
         }
