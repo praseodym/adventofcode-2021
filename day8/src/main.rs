@@ -13,11 +13,10 @@ fn main() {
         let mut s = line.split('|');
 
         let signals_raw = s.next().unwrap().trim();
+        let one = signals_raw.split(' ').find(|s| s.len() == 2).unwrap();
+        let four = signals_raw.split(' ').find(|s| s.len() == 4).unwrap();
 
-        let mut signals_sorted = signals_raw.split(' ').collect::<Vec<&str>>();
-        signals_sorted.sort_by_key(|a| a.len());
-
-        let mut signals_occurences: HashMap<char, u8> = HashMap::new();
+        let mut signals_occurences: HashMap<char, u8> = HashMap::with_capacity(7);
         signals_raw.chars().filter(|&c| c != ' ').for_each(|c| {
             signals_occurences
                 .entry(c)
@@ -25,23 +24,25 @@ fn main() {
                 .or_insert(1);
         });
 
-        let mut mapping: HashMap<char, char> = HashMap::new();
+        let mut mapping: HashMap<char, char> = HashMap::with_capacity(7);
         for (c, n) in signals_occurences {
             let m = match n {
                 4 => 'e',
                 6 => 'b',
                 7 => {
-                    // d and g occurs 7 times - d is in 4 (len 4), g is not
-                    match signals_sorted[2].chars().find(|&p| p == c) {
-                        Some(_) => 'd',
-                        None => 'g',
+                    // d and g occur 7 times - d is in 4, g is not
+                    if four.contains(c) {
+                        'd'
+                    } else {
+                        'g'
                     }
                 }
                 8 => {
-                    // a and c occur 8 times - a is not in 1 (len 2), c is
-                    match signals_sorted[0].chars().find(|&p| p == c) {
-                        Some(_) => 'c',
-                        None => 'a',
+                    // a and c occur 8 times - c is in 1, a is not
+                    if one.contains(c) {
+                        'c'
+                    } else {
+                        'a'
                     }
                 }
                 9 => 'f',
@@ -63,33 +64,34 @@ fn main() {
             mapped.sort();
             let new = mapped.into_iter().collect::<String>();
 
-            digits += match new.as_str() {
-                "abcefg" => "0",
+            let d = match new.as_str() {
+                "abcefg" => '0',
                 "cf" => {
                     part1 += 1;
-                    "1"
+                    '1'
                 }
-                "acdeg" => "2",
-                "acdfg" => "3",
+                "acdeg" => '2',
+                "acdfg" => '3',
                 "bcdf" => {
                     part1 += 1;
-                    "4"
+                    '4'
                 }
-                "abdfg" => "5",
-                "abdefg" => "6",
+                "abdfg" => '5',
+                "abdefg" => '6',
                 "acf" => {
                     part1 += 1;
-                    "7"
+                    '7'
                 }
                 "abcdefg" => {
                     part1 += 1;
-                    "8"
+                    '8'
                 }
-                "abcdfg" => "9",
+                "abcdfg" => '9',
                 _ => {
                     panic!("unknown segment combination: {}", new);
                 }
-            }
+            };
+            digits.push(d);
         }
         part2 += digits.parse::<u32>().unwrap();
     }
