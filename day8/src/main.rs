@@ -66,31 +66,22 @@ fn main() {
 
             let d = match new.as_str() {
                 "abcefg" => '0',
-                "cf" => {
-                    part1 += 1;
-                    '1'
-                }
+                "cf" => '1',
                 "acdeg" => '2',
                 "acdfg" => '3',
-                "bcdf" => {
-                    part1 += 1;
-                    '4'
-                }
+                "bcdf" => '4',
                 "abdfg" => '5',
                 "abdefg" => '6',
-                "acf" => {
-                    part1 += 1;
-                    '7'
-                }
-                "abcdefg" => {
-                    part1 += 1;
-                    '8'
-                }
+                "acf" => '7',
+                "abcdefg" => '8',
                 "abcdfg" => '9',
                 _ => {
                     panic!("unknown segment combination: {}", new);
                 }
             };
+            if d == '1' || d == '4' || d == '7' || d == '8' {
+                part1 += 1;
+            }
             digits.push(d);
         }
         part2 += digits.parse::<u32>().unwrap();
