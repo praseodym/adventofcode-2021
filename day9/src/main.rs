@@ -29,10 +29,10 @@ fn main() {
     for i in 0..N {
         for j in 0..M {
             let h = heightmap[i][j];
-            if (i == 0 || heightmap[i - 1][j] > h)
-                && (i == (N - 1) || heightmap[i + 1][j] > h)
-                && (j == 0 || heightmap[i][j - 1] > h)
+            if (j == 0 || heightmap[i][j - 1] > h)
                 && (j == (M - 1) || heightmap[i][j + 1] > h)
+                && (i == 0 || heightmap[i - 1][j] > h)
+                && (i == (N - 1) || heightmap[i + 1][j] > h)
             {
                 part1 += 1 + h as u32;
                 basins.push(floodfill(heightmap, (i, j)));
@@ -66,16 +66,16 @@ fn floodfill(heightmap: Heightmap, node: Node) -> u16 {
             continue;
         }
         floodmap[i][j] = true;
-        if j != 0 {
+        if j != 0 && !floodmap[i][j - 1] {
             q.push_back((i, j - 1));
         }
-        if j != M - 1 {
+        if j != M - 1 && !floodmap[i][j + 1] {
             q.push_back((i, j + 1));
         }
-        if i != 0 {
+        if i != 0 && !floodmap[i - 1][j] {
             q.push_back((i - 1, j));
         }
-        if i != N - 1 {
+        if i != N - 1 && !floodmap[i + 1][j] {
             q.push_back((i + 1, j));
         }
         count += 1;
