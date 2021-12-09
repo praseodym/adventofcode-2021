@@ -3,23 +3,34 @@ use std::time::Instant;
 fn main() {
     let now = Instant::now();
 
-    let heightmap = include_str!("../input")
-        .chars()
-        .filter(|&c| c != '\n')
-        .map(|c| c.to_digit(10).unwrap() as u8)
-        .collect::<Vec<u8>>();
-    let line_len = 100;
+    let input = include_str!("../input").trim_end().split('\n');
+
+    const N: usize = 100;
+    const M: usize = 100;
+    let mut heightmap = [[0u8; M]; N];
+
+    for (i, line) in input.enumerate() {
+        for (j, d) in line
+            .chars()
+            .map(|c| c.to_digit(10).unwrap() as u8)
+            .enumerate()
+        {
+            heightmap[i][j] = d;
+        }
+    }
 
     let mut part1 = 0u32;
 
-    let end = heightmap.len() - 1;
-    for (i, &h) in heightmap.iter().enumerate() {
-        if (i % line_len == 0 || heightmap[i - 1] > h)
-            && (i % line_len == line_len || heightmap[i + 1] > h)
-            && (i < line_len || heightmap[i - line_len] > h)
-            && (i + line_len > end || heightmap[i + line_len] > h)
-        {
-            part1 += 1 + h as u32;
+    for i in 0..N {
+        for j in 0..M {
+            let h = heightmap[i][j];
+            if (i == 0 || heightmap[i - 1][j] > h)
+                && (i == (N - 1) || heightmap[i + 1][j] > h)
+                && (j == 0 || heightmap[i][j - 1] > h)
+                && (j == (M - 1) || heightmap[i][j + 1] > h)
+            {
+                part1 += 1 + h as u32;
+            }
         }
     }
 
