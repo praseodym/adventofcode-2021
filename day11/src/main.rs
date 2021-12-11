@@ -12,6 +12,7 @@ fn main() {
     let input = include_str!("../input").trim_end().split('\n');
     let mut octopuses: Octopuses = [[0u8; M]; N];
     let mut flashes = 0u32;
+    let mut first_step_all_flash = 0u32;
 
     for (i, line) in input.enumerate() {
         assert_eq!(M, line.len());
@@ -26,7 +27,10 @@ fn main() {
 
     // debug(0, octopuses);
 
-    for step in 1..=100 {
+    let mut step = 0u32;
+    while step < 100 || first_step_all_flash == 0 {
+        step += 1;
+        let mut flashes_round = 0u32;
         let mut q: VecDeque<Octopus> = VecDeque::new();
         let mut r: VecDeque<Octopus> = VecDeque::new();
         for i in 0..N {
@@ -37,17 +41,30 @@ fn main() {
         while !q.is_empty() {
             let octopus = q.pop_front().unwrap();
             flash(&mut octopuses, octopus, &mut q);
-            flashes += 1;
+            if step <= 100 {
+                flashes += 1;
+            }
+            flashes_round += 1;
             r.push_back(octopus);
         }
         while !r.is_empty() {
             let (i, j) = r.pop_front().unwrap();
             octopuses[i][j] = 0;
         }
+        if flashes_round == 100 && first_step_all_flash == 0 {
+            first_step_all_flash = step;
+        }
         // debug(step, octopuses);
     }
 
     println!("part 1: {} flashes", flashes);
+    println!(
+        "part 2: {} is the first step during which all octopuses flash",
+        first_step_all_flash
+    );
+
+    assert_eq!(flashes, 1632);
+    assert_eq!(first_step_all_flash, 303);
 
     let elapsed_time = now.elapsed();
     println!("done in {} microseconds", elapsed_time.as_micros())
