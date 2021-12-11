@@ -80,37 +80,28 @@ fn increase_energy_level(octopuses: &mut Octopuses, octopus: Octopus, q: &mut Ve
 
 fn flash(octopuses: &mut Octopuses, octopus: Octopus, q: &mut VecDeque<Octopus>) {
     let (i, j) = octopus;
-    if i != 0 {
-        if j != 0 {
-            increase_energy_level(octopuses, (i - 1, j - 1), q);
-        }
-        increase_energy_level(octopuses, (i - 1, j), q);
-        if j != M - 1 {
-            increase_energy_level(octopuses, (i - 1, j + 1), q);
-        }
-    }
-    if j != 0 {
-        increase_energy_level(octopuses, (i, j - 1), q);
-    }
-    if j != M - 1 {
-        increase_energy_level(octopuses, (i, j + 1), q);
-    }
-    if i != N - 1 {
-        if j != 0 {
-            increase_energy_level(octopuses, (i + 1, j - 1), q);
-        }
-        increase_energy_level(octopuses, (i + 1, j), q);
-        if j != M - 1 {
-            increase_energy_level(octopuses, (i + 1, j + 1), q);
+    for dx in -1..=1 {
+        for dy in -1..=1 {
+            let x = i as i32 + dx;
+            let y = j as i32 + dy;
+            if x >= 0
+                && y >= 0
+                && (x as usize) < N
+                && (y as usize) < M
+                && !(x as usize == i && y as usize == j)
+            {
+                increase_energy_level(octopuses, (x as usize, y as usize), q);
+            }
         }
     }
 }
 
+#[allow(dead_code)]
 fn debug(step: u32, octopuses: Octopuses) {
     println!("After step {}", step);
-    for i in 0..N {
-        for j in 0..M {
-            print!("{}", octopuses[i][j])
+    for row in octopuses {
+        for octopus in row {
+            print!("{}", octopus)
         }
         println!();
     }
