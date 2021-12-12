@@ -15,10 +15,14 @@ fn main() {
         .map(|mut s| (s.next().unwrap(), s.next().unwrap()))
         .collect();
 
-    let paths = dfs(&edges, &"start", &[]);
+    let paths_part1 = dfs_part1(&edges, &"start", &[]);
+    let paths_part2 = dfs_part2(&edges, &"start", &[], false);
 
-    println!("paths: {}", paths);
-    assert_eq!(paths, 5958);
+    println!("paths part 1: {}", paths_part1);
+    println!("paths part 2: {}", paths_part2);
+
+    assert_eq!(paths_part1, 5958);
+    assert_eq!(paths_part2, 150426);
 
     let elapsed_time = now.elapsed();
     println!("done in {} microseconds", elapsed_time.as_micros())
@@ -36,19 +40,45 @@ fn edges_from_vertex<'a>(edges: &'a [Edge], vertex: &'a Vertex) -> EdgeIterator<
     a.chain(b)
 }
 
-fn dfs<'a>(edges: &'a [Edge], vertex: &'a Vertex, visited: &[Vertex]) -> u16 {
+fn dfs_part1<'a>(edges: &'a [Edge], vertex: &'a Vertex, visited: &[Vertex]) -> u16 {
     let mut visited = visited.to_vec();
     let mut paths = 0u16;
     visited.push(vertex);
     if vertex == &"end" {
-        // println!("{}", visited.join("-"));
+        // println!("{}", visited.join(","));
         return paths + 1;
     }
     for (_, v) in edges_from_vertex(edges, vertex) {
         if v.chars().next().unwrap().is_lowercase() && visited.contains(&v) {
             continue;
         }
-        paths += dfs(edges, &v, &visited);
+        paths += dfs_part1(edges, &v, &visited);
+    }
+    paths
+}
+
+fn dfs_part2<'a>(
+    edges: &'a [Edge],
+    vertex: &'a Vertex,
+    visited: &[Vertex],
+    small_cave_twice: bool,
+) -> u32 {
+    let mut visited = visited.to_vec();
+    let mut paths = 0u32;
+    visited.push(vertex);
+    if vertex == &"end" {
+        // println!("{}", visited.join(","));
+        return paths + 1;
+    }
+    for (_, v) in edges_from_vertex(edges, vertex) {
+        if v == "start" {
+            continue;
+        }
+        let small_cave_once = v.chars().next().unwrap().is_lowercase() && visited.contains(&v);
+        if small_cave_once && small_cave_twice {
+            continue;
+        }
+        paths += dfs_part2(edges, &v, &visited, small_cave_once || small_cave_twice);
     }
     paths
 }
