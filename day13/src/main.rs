@@ -1,5 +1,4 @@
 #![feature(test)]
-#![feature(type_alias_impl_trait)]
 
 extern crate test;
 
@@ -27,14 +26,22 @@ enum Direction {
 }
 
 fn main() {
-    let dots_part1 = run(include_str!("../input"));
+    let (dots_part1, paper) = run(include_str!("../input"));
     println!("dots after one fold: {:?}", dots_part1);
+    println!("paper after folds:\n{}", paper);
 }
 
-fn run(input: &'static str) -> u16 {
-    let (paper, folds) = parse_input(input);
-    let (_, dots) = fold(&paper, &folds[0]);
-    dots
+fn run(input: &'static str) -> (u16, Paper) {
+    let (mut paper, folds) = parse_input(input);
+    let mut dots_part1 = 0;
+    for (i, fold) in folds.iter().enumerate() {
+        let (new_paper, dots) = paper.fold(fold);
+        paper = new_paper;
+        if i == 0 {
+            dots_part1 = dots;
+        }
+    }
+    (dots_part1, paper)
 }
 
 fn parse_input(input: &str) -> (Paper, Vec<Fold>) {
@@ -86,6 +93,42 @@ impl Paper {
             height: 0,
         }
     }
+
+    fn fold(&self, fold: &Fold) -> (Paper, u16) {
+        let mut folded_paper: Paper = Paper::new();
+        let mut dots = 0u16;
+        match fold.direction {
+            Direction::X => {
+                folded_paper.width = fold.position - 1;
+                folded_paper.height = self.height;
+                for y in 0..=folded_paper.height {
+                    for x in 0..=folded_paper.width {
+                        let x2 = 2 * fold.position - x;
+                        let dot = self.dots[y][x] || self.dots[y][x2];
+                        if dot {
+                            dots += 1;
+                            folded_paper.dots[y][x] = dot;
+                        }
+                    }
+                }
+            }
+            Direction::Y => {
+                folded_paper.width = self.width;
+                folded_paper.height = fold.position - 1;
+                for y in 0..=folded_paper.height {
+                    for x in 0..=folded_paper.width {
+                        let y2 = 2 * fold.position - y;
+                        let dot = self.dots[y][x] || self.dots[y2][x];
+                        if dot {
+                            dots += 1;
+                            folded_paper.dots[y][x] = dot;
+                        }
+                    }
+                }
+            }
+        }
+        (folded_paper, dots)
+    }
 }
 
 impl fmt::Display for Paper {
@@ -98,42 +141,6 @@ impl fmt::Display for Paper {
         }
         Ok(())
     }
-}
-
-fn fold(paper: &Paper, fold: &Fold) -> (Paper, u16) {
-    let mut folded_paper: Paper = Paper::new();
-    let mut dots = 0u16;
-    match fold.direction {
-        Direction::X => {
-            folded_paper.width = fold.position - 1;
-            folded_paper.height = paper.height;
-            for y in 0..=folded_paper.height {
-                for x in 0..=folded_paper.width {
-                    let x2 = 2 * fold.position - x;
-                    let dot = paper.dots[y][x] || paper.dots[y][x2];
-                    if dot {
-                        dots += 1;
-                        folded_paper.dots[y][x] = dot;
-                    }
-                }
-            }
-        }
-        Direction::Y => {
-            folded_paper.width = paper.width;
-            folded_paper.height = fold.position - 1;
-            for y in 0..=folded_paper.height {
-                for x in 0..=folded_paper.width {
-                    let y2 = 2 * fold.position - y;
-                    let dot = paper.dots[y][x] || paper.dots[y2][x];
-                    if dot {
-                        dots += 1;
-                        folded_paper.dots[y][x] = dot;
-                    }
-                }
-            }
-        }
-    }
-    (folded_paper, dots)
 }
 
 #[cfg(test)]
@@ -166,14 +173,14 @@ mod tests {
     #[test]
     fn test_input_test1_fold() {
         let (paper, folds) = parse_input(include_str!("../input-test1"));
-        let (folded_paper, dots) = fold(&paper, &folds[0]);
+        let (folded_paper, dots) = paper.fold(&folds[0]);
         println!("{}", folded_paper);
         assert_eq!(dots, 17);
         assert_eq!(
             folded_paper.to_string(),
             include_str!("../input-test1-folded1")
         );
-        let (folded_paper, dots) = fold(&folded_paper, &folds[1]);
+        let (folded_paper, dots) = folded_paper.fold(&folds[1]);
         println!("{}", folded_paper);
         assert_eq!(dots, 16);
         assert_eq!(
@@ -184,8 +191,9 @@ mod tests {
 
     #[test]
     fn test_input_own() {
-        let dots_part1 = run(include_str!("../input"));
+        let (dots_part1, paper) = run(include_str!("../input"));
         assert_eq!(dots_part1, 747);
+        assert_eq!(paper.to_string(), include_str!("../output"));
     }
 
     #[bench]
