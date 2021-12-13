@@ -98,28 +98,26 @@ impl Paper {
         match fold.direction {
             Direction::X => {
                 self.width = fold.position - 1;
-                for y in 0..=self.height {
-                    for x in 0..=self.width {
-                        let x2 = 2 * fold.position - x;
-                        let dot = self.dots[y][x] || self.dots[y][x2];
-                        if dot {
-                            dots += 1;
-                            self.dots[y][x] = dot;
-                        }
-                    }
-                }
             }
             Direction::Y => {
                 self.height = fold.position - 1;
-                for y in 0..=self.height {
-                    for x in 0..=self.width {
-                        let y2 = 2 * fold.position - y;
-                        let dot = self.dots[y][x] || self.dots[y2][x];
-                        if dot {
-                            dots += 1;
-                            self.dots[y][x] = dot;
-                        }
+            }
+        }
+        for y in 0..=self.height {
+            for x in 0..=self.width {
+                let dot = match fold.direction {
+                    Direction::X => {
+                        let x2 = 2 * fold.position - x;
+                        self.dots[y][x] || self.dots[y][x2]
                     }
+                    Direction::Y => {
+                        let y2 = 2 * fold.position - y;
+                        self.dots[y][x] || self.dots[y2][x]
+                    }
+                };
+                if dot {
+                    dots += 1;
+                    self.dots[y][x] = dot;
                 }
             }
         }
