@@ -30,9 +30,7 @@ fn run(input: &'static str) -> (usize, usize) {
     });
 
     let start = caves.start();
-    let paths_part1 = caves.visit(start, Default::default(), false);
-    let paths_part2 = caves.visit(start, Default::default(), true);
-    (paths_part1, paths_part2)
+    caves.visit(start, Default::default(), true)
 }
 
 impl Caves {
@@ -71,12 +69,13 @@ impl Caves {
         self.small_caves.contains(&cave)
     }
 
-    fn visit(&self, cave: Cave, visited: &[Cave], double_allowed: bool) -> usize {
+    fn visit(&self, cave: Cave, visited: &[Cave], double_allowed: bool) -> (usize, usize) {
         let next_caves = self.next.get(cave as usize).unwrap();
         if next_caves.is_empty() {
-            return 1;
+            return (if double_allowed { 1 } else { 0 }, 1);
         }
-        let mut paths = 0;
+        let mut paths1 = 0;
+        let mut paths2 = 0;
         let mut visited = visited;
         let mut v: Vec<Cave>;
         if self.is_small(cave) {
@@ -93,9 +92,11 @@ impl Caves {
                     continue;
                 }
             }
-            paths += self.visit(next, visited, double_allowed);
+            let (a, b) = self.visit(next, visited, double_allowed);
+            paths1 += a;
+            paths2 += b;
         }
-        paths
+        (paths1, paths2)
     }
 }
 
