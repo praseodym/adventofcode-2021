@@ -5,23 +5,30 @@ extern crate test;
 
 use std::collections::{HashMap, LinkedList};
 
+type Polymer = LinkedList<char>;
 type Rules = HashMap<(char, char), char>;
 
 fn main() {
-    let part1_answer = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
+    // println!("part 2 answer: {}", part2_answer);
 }
 
-fn run(input: &'static str) -> usize {
-    let (template, rules) = parse_input(input);
-    let mut new_polymer = template.to_string();
+fn run(input: &'static str) -> (usize, usize) {
+    let (mut polymer, rules) = parse_input(input);
     for _ in 1..=10 {
-        new_polymer = polymerize(&new_polymer, &rules);
+        polymerize(&mut polymer, &rules);
     }
-    part1_count(&new_polymer)
+    let part1_answer = answer_count(&polymer);
+    // for _ in 11..=40 {
+    //     polymerize(&mut polymer, &rules);
+    // }
+    // let part2_answer = answer_count(&new_polymer);
+    // (part1_answer, part2_answer)
+    (part1_answer, 0)
 }
 
-fn parse_input(input: &'static str) -> (&str, Rules) {
+fn parse_input(input: &'static str) -> (Polymer, Rules) {
     let input = input.trim_end().split('\n');
     let mut template = "";
     let mut rules: Rules = HashMap::new();
@@ -42,14 +49,14 @@ fn parse_input(input: &'static str) -> (&str, Rules) {
         rules.insert(k, v);
     }
 
+    let template = polymer_to_linkedlist(template);
+
     (template, rules)
 }
 
-fn polymerize(polymer: &str, rules: &Rules) -> String {
-    let mut p: LinkedList<char> = LinkedList::new();
-    polymer.chars().for_each(|c| p.push_back(c));
-    let l = p.len();
-    let mut pc = p.cursor_front_mut();
+fn polymerize<'a>(polymer: &'a mut Polymer, rules: &'a Rules) -> &'a mut Polymer {
+    let l = polymer.len();
+    let mut pc = polymer.cursor_front_mut();
 
     for _ in 1..l {
         pc.move_next();
@@ -61,18 +68,26 @@ fn polymerize(polymer: &str, rules: &Rules) -> String {
             pc.insert_before(*r);
         }
     }
-    // TODO: return LinkedList instead?
+    polymer
+}
+
+fn polymer_to_linkedlist(polymer: &str) -> Polymer {
+    let mut p: LinkedList<char> = LinkedList::new();
+    polymer.chars().for_each(|c| p.push_back(c));
+    p
+}
+
+fn polymer_to_string(polymer: &Polymer) -> String {
     let mut ret = String::new();
-    p.iter().for_each(|c| ret.push(*c));
+    polymer.iter().for_each(|c| ret.push(*c));
     ret
 }
 
-fn part1_count(polymer: &str) -> usize {
+fn answer_count(polymer: &Polymer) -> usize {
     let counts = polymer
-        .chars()
         .into_iter()
         .fold(HashMap::<char, usize>::new(), |mut m, c| {
-            *m.entry(c).or_default() += 1;
+            *m.entry(*c).or_default() += 1;
             m
         });
     let max = counts.iter().map(|(_, v)| *v).max().unwrap();
@@ -89,43 +104,50 @@ mod tests {
     #[test]
     fn test_input_test1_parse() {
         let (template, rules) = parse_input(include_str!("../input-test1"));
-        assert_eq!(template, "NNCB");
+        assert_eq!(polymer_to_string(&template), "NNCB");
         assert_eq!(rules.len(), 16);
     }
 
     #[test]
     fn test_input_test1_polymerize() {
-        let (template, rules) = parse_input(include_str!("../input-test1"));
+        let (mut polymer, rules) = parse_input(include_str!("../input-test1"));
         // step 1
-        let new_polymer = polymerize(template, &rules);
-        assert_eq!(new_polymer, "NCNBCHB");
+        polymerize(&mut polymer, &rules);
+        assert_eq!(polymer_to_string(&polymer), "NCNBCHB");
         // step 2
-        let new_polymer = polymerize(&new_polymer, &rules);
-        assert_eq!(new_polymer, "NBCCNBBBCBHCB");
+        let polymer = polymerize(&mut polymer, &rules);
+        assert_eq!(polymer_to_string(polymer), "NBCCNBBBCBHCB");
         // step 3
-        let new_polymer = polymerize(&new_polymer, &rules);
-        assert_eq!(new_polymer, "NBBBCNCCNBBNBNBBCHBHHBCHB");
+        polymerize(polymer, &rules);
+        assert_eq!(polymer_to_string(polymer), "NBBBCNCCNBBNBNBBCHBHHBCHB");
         // step 4
-        let new_polymer = polymerize(&new_polymer, &rules);
+        polymerize(polymer, &rules);
         assert_eq!(
-            new_polymer,
+            polymer_to_string(polymer),
             "NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB"
         );
         // step 5-10
-        let mut new_polymer = new_polymer;
         for _ in 5..=10 {
-            new_polymer = polymerize(&new_polymer, &rules);
+            polymerize(polymer, &rules);
         }
-        assert_eq!(new_polymer.len(), 3073);
+        assert_eq!(polymer.len(), 3073);
         // answer for part 1
-        let part1_answer = part1_count(&new_polymer);
+        let part1_answer = answer_count(polymer);
         assert_eq!(part1_answer, 1588);
+
+        // // step 11-40
+        // for _ in 11..=40 {
+        //     polymerize(&mut polymer, &rules);
+        // }
+        // // answer for part 2
+        // let part2_answer = answer_count(&polymer);
+        // assert_eq!(part2_answer, 2188189693529);
     }
 
     #[test]
     fn test_input_own() {
-        let part1_answer = run(include_str!("../input"));
-        // assert_eq!(part1_answer, 747);
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
+        assert_eq!(part1_answer, 3697);
     }
 
     #[bench]
