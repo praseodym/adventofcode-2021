@@ -4,7 +4,7 @@ extern crate test;
 
 use std::collections::HashMap;
 
-type Cave = usize;
+type Cave = u16;
 
 #[derive(Default, Debug)]
 struct Caves {
@@ -44,7 +44,7 @@ impl Caves {
         if to != "start" && from != "end" {
             let u = self.cave_by_name(from);
             let v = self.cave_by_name(to);
-            self.next.get_mut(u).unwrap().push(v);
+            self.next.get_mut(u as usize).unwrap().push(v);
         }
     }
 
@@ -72,7 +72,7 @@ impl Caves {
     }
 
     fn visit(&self, cave: Cave, visited: &[Cave], double_allowed: bool) -> usize {
-        let next_caves = self.next.get(cave).unwrap();
+        let next_caves = self.next.get(cave as usize).unwrap();
         if next_caves.is_empty() {
             return 1;
         }
