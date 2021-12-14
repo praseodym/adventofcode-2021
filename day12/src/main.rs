@@ -3,19 +3,12 @@
 extern crate test;
 
 use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher};
-use std::rc::Rc;
 
-#[derive(Debug, Clone)]
-struct Cave {
-    name: &'static str,
-    small: bool,
-}
+type Cave = &'static str;
 
 #[derive(Default, Debug)]
 struct Caves {
-    cache: HashMap<&'static str, Rc<Cave>>,
-    next: HashMap<Rc<Cave>, HashSet<Rc<Cave>>>,
+    next: HashMap<Cave, HashSet<Cave>>,
 }
 
 fn main() {
@@ -31,21 +24,17 @@ fn run(input: &'static str) -> (usize, usize) {
     input.map(|l| l.split('-')).for_each(|mut s| {
         let u = s.next().unwrap();
         let v = s.next().unwrap();
-        caves.load(u, v);
+        caves.add_next(u, v);
+        caves.add_next(v, u);
     });
 
-    let paths_part1 = caves.visit(caves.get_start(), Default::default(), false);
-    let paths_part2 = caves.visit(caves.get_start(), Default::default(), true);
+    let paths_part1 = caves.visit("start", Default::default(), false);
+    let paths_part2 = caves.visit("start", Default::default(), true);
     (paths_part1, paths_part2)
 }
 
-impl Cave {
-    pub fn new(name: &'static str) -> Cave {
-        Cave {
-            name,
-            small: name.chars().next().unwrap().is_lowercase(),
-        }
-    }
+fn is_small(cave: Cave) -> bool {
+    cave.chars().next().unwrap().is_lowercase()
 }
 
 impl Caves {
@@ -53,64 +42,34 @@ impl Caves {
         Default::default()
     }
 
-    fn get(&mut self, name: &'static str) -> Rc<Cave> {
-        if self.cache.get(name).is_none() {
-            self.cache.insert(name, Rc::new(Cave::new(name)));
-        }
-        self.cache.get(name).unwrap().clone()
-    }
-
-    pub fn load(&mut self, from: &'static str, to: &'static str) {
-        let u = self.get(from);
-        let v = self.get(to);
-        self.add_next(u.clone(), v.clone());
-        self.add_next(v, u);
-    }
-
-    fn add_next(&mut self, from: Rc<Cave>, to: Rc<Cave>) {
-        if to.name != "start" && from.name != "end" {
+    fn add_next(&mut self, from: Cave, to: Cave) {
+        if to != "start" && from != "end" {
             self.next.entry(from).or_default().insert(to);
         }
     }
 
-    fn get_start(&self) -> Rc<Cave> {
-        self.cache.get("start").unwrap().clone()
-    }
-
-    fn visit(&self, cave: Rc<Cave>, visited: &[Rc<Cave>], double_allowed: bool) -> usize {
+    fn visit(&self, cave: Cave, visited: &[Cave], double_allowed: bool) -> usize {
         let mut paths = 0;
         let mut visited = visited.to_vec();
-        if cave.small {
-            visited.push(cave.clone());
+        if is_small(cave) {
+            visited.push(cave);
         }
         if let Some(next_caves) = self.next.get(&cave) {
             for next in next_caves.iter() {
                 let mut double_allowed = double_allowed;
-                if next.small && visited.contains(next) {
+                if is_small(next) && visited.contains(next) {
                     if double_allowed {
                         double_allowed = false;
                     } else {
                         continue;
                     }
                 }
-                paths += self.visit(next.clone(), &visited, double_allowed);
+                paths += self.visit(next, &visited, double_allowed);
             }
         } else {
             return 1;
         }
         paths
-    }
-}
-
-impl PartialEq for Cave {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-}
-impl Eq for Cave {}
-impl Hash for Cave {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
     }
 }
 
