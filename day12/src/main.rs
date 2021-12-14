@@ -4,13 +4,13 @@ extern crate test;
 
 use std::collections::HashMap;
 
-type Cave = u16;
+type Cave = usize;
 
 #[derive(Default, Debug)]
 struct Caves {
     caves: HashMap<&'static str, Cave>,
     small_caves: Vec<Cave>,
-    next: HashMap<Cave, Vec<Cave>>,
+    next: Vec<Vec<Cave>>,
 }
 
 fn main() {
@@ -44,7 +44,7 @@ impl Caves {
         if to != "start" && from != "end" {
             let u = self.cave_by_name(from);
             let v = self.cave_by_name(to);
-            self.next.entry(u).or_default().push(v);
+            self.next.get_mut(u).unwrap().push(v);
         }
     }
 
@@ -52,8 +52,9 @@ impl Caves {
         match self.caves.get(name) {
             Some(cave) => *cave,
             None => {
-                let cave = self.caves.len() as Cave;
+                let cave = self.next.len() as Cave;
                 self.caves.insert(name, cave);
+                self.next.push(Vec::new());
                 if name.chars().next().unwrap().is_lowercase() {
                     self.small_caves.push(cave);
                 }
@@ -71,27 +72,27 @@ impl Caves {
     }
 
     fn visit(&self, cave: Cave, visited: &[Cave], double_allowed: bool) -> usize {
+        let next_caves = self.next.get(cave).unwrap();
+        if next_caves.is_empty() {
+            return 1;
+        }
         let mut paths = 0;
-        if let Some(next_caves) = self.next.get(&cave) {
-            for &next in next_caves.iter() {
-                let mut double_allowed = double_allowed;
-                if self.is_small(next) && visited.contains(&next) {
-                    if double_allowed {
-                        double_allowed = false;
-                    } else {
-                        continue;
-                    }
-                }
-                if self.is_small(cave) {
-                    let mut visited = visited.to_vec();
-                    visited.push(cave);
-                    paths += self.visit(next, &visited, double_allowed);
+        for &next in next_caves.iter() {
+            let mut double_allowed = double_allowed;
+            if self.is_small(next) && visited.contains(&next) {
+                if double_allowed {
+                    double_allowed = false;
                 } else {
-                    paths += self.visit(next, visited, double_allowed);
+                    continue;
                 }
             }
-        } else {
-            return 1;
+            if self.is_small(cave) {
+                let mut visited = visited.to_vec();
+                visited.push(cave);
+                paths += self.visit(next, &visited, double_allowed);
+            } else {
+                paths += self.visit(next, visited, double_allowed);
+            }
         }
         paths
     }
