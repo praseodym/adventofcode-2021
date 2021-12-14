@@ -2,18 +2,19 @@
 
 extern crate test;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-type Cave = &'static str;
+type Cave = u16;
 
 #[derive(Default, Debug)]
 struct Caves {
-    next: HashMap<Cave, HashSet<Cave>>,
+    caves: HashMap<&'static str, Cave>,
+    small_caves: Vec<Cave>,
+    next: HashMap<Cave, Vec<Cave>>,
 }
 
 fn main() {
     let (paths_part1, paths_part2) = run(include_str!("../input"));
-
     println!("paths part 1: {}", paths_part1);
     println!("paths part 2: {}", paths_part2);
 }
@@ -28,13 +29,10 @@ fn run(input: &'static str) -> (usize, usize) {
         caves.add_next(v, u);
     });
 
-    let paths_part1 = caves.visit("start", Default::default(), false);
-    let paths_part2 = caves.visit("start", Default::default(), true);
+    let start = caves.start();
+    let paths_part1 = caves.visit(start, Default::default(), false);
+    let paths_part2 = caves.visit(start, Default::default(), true);
     (paths_part1, paths_part2)
-}
-
-fn is_small(cave: Cave) -> bool {
-    cave.chars().next().unwrap().is_lowercase()
 }
 
 impl Caves {
@@ -42,29 +40,55 @@ impl Caves {
         Default::default()
     }
 
-    fn add_next(&mut self, from: Cave, to: Cave) {
+    fn add_next(&mut self, from: &'static str, to: &'static str) {
         if to != "start" && from != "end" {
-            self.next.entry(from).or_default().insert(to);
+            let u = self.cave_by_name(from);
+            let v = self.cave_by_name(to);
+            self.next.entry(u).or_default().push(v);
         }
+    }
+
+    fn cave_by_name(&mut self, name: &'static str) -> Cave {
+        match self.caves.get(name) {
+            Some(cave) => *cave,
+            None => {
+                let cave = self.caves.len() as Cave;
+                self.caves.insert(name, cave);
+                if name.chars().next().unwrap().is_lowercase() {
+                    self.small_caves.push(cave);
+                }
+                cave
+            }
+        }
+    }
+
+    fn start(&self) -> Cave {
+        *self.caves.get("start").unwrap()
+    }
+
+    fn is_small(&self, cave: Cave) -> bool {
+        self.small_caves.contains(&cave)
     }
 
     fn visit(&self, cave: Cave, visited: &[Cave], double_allowed: bool) -> usize {
         let mut paths = 0;
-        let mut visited = visited.to_vec();
-        if is_small(cave) {
-            visited.push(cave);
-        }
         if let Some(next_caves) = self.next.get(&cave) {
-            for next in next_caves.iter() {
+            for &next in next_caves.iter() {
                 let mut double_allowed = double_allowed;
-                if is_small(next) && visited.contains(next) {
+                if self.is_small(next) && visited.contains(&next) {
                     if double_allowed {
                         double_allowed = false;
                     } else {
                         continue;
                     }
                 }
-                paths += self.visit(next, &visited, double_allowed);
+                if self.is_small(cave) {
+                    let mut visited = visited.to_vec();
+                    visited.push(cave);
+                    paths += self.visit(next, &visited, double_allowed);
+                } else {
+                    paths += self.visit(next, visited, double_allowed);
+                }
             }
         } else {
             return 1;
