@@ -77,22 +77,23 @@ impl Caves {
             return 1;
         }
         let mut paths = 0;
+        let mut visited = visited;
+        let mut v: Vec<Cave>;
+        if self.is_small(cave) {
+            v = visited.to_vec();
+            v.push(cave);
+            visited = &v;
+        }
         for &next in next_caves.iter() {
             let mut double_allowed = double_allowed;
-            if self.is_small(next) && visited.contains(&next) {
+            if visited.contains(&next) {
                 if double_allowed {
                     double_allowed = false;
                 } else {
                     continue;
                 }
             }
-            if self.is_small(cave) {
-                let mut visited = visited.to_vec();
-                visited.push(cave);
-                paths += self.visit(next, &visited, double_allowed);
-            } else {
-                paths += self.visit(next, visited, double_allowed);
-            }
+            paths += self.visit(next, visited, double_allowed);
         }
         paths
     }
