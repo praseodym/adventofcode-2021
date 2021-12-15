@@ -2,13 +2,14 @@
 
 extern crate test;
 
-use std::cmp;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::fmt::Formatter;
 use std::hash::{Hash, Hasher};
+use std::{cmp, fmt};
 
-const N: usize = 100; // x direction
-const M: usize = 100; // y direction
+const N: usize = 500; // x direction
+const M: usize = 500; // y direction
 type Risk = u16;
 #[derive(Debug)]
 struct Grid {
@@ -24,15 +25,16 @@ struct Position {
 }
 
 fn main() {
-    let (part1_answer, _part2_answer) = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
-    // println!("part 2 answer: {}", part2_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
 fn run(input: &'static str) -> (u16, u16) {
-    let grid = Grid::parse_input(input);
+    let mut grid = Grid::parse_input(input);
     let part1_answer = grid.find_path();
-    let part2_answer = 0;
+    grid.expand();
+    let part2_answer = grid.find_path();
     (part1_answer, part2_answer)
 }
 
@@ -56,6 +58,30 @@ impl Grid {
             }
         }
         grid
+    }
+
+    fn expand(&mut self) {
+        // naive but let's get it done first
+        for dy in 0..5 {
+            for dx in 0..5 {
+                if dy == 0 && dx == 0 {
+                    continue;
+                }
+                let ddy = (self.height + 1) * dy;
+                let ddx = (self.width + 1) * dx;
+                for y in 0..=self.height {
+                    for x in 0..=self.height {
+                        let mut r = self.risks[y][x] + dx as u16 + dy as u16;
+                        if r > 9 {
+                            r -= 9;
+                        }
+                        self.risks[ddy + y][ddx + x] = r;
+                    }
+                }
+            }
+        }
+        self.width = (self.width + 1) * 5 - 1;
+        self.height = (self.height + 1) * 5 - 1;
     }
 
     // https://codereview.stackexchange.com/a/202879
@@ -130,6 +156,17 @@ impl Grid {
         ret
     }
 }
+impl fmt::Display for Grid {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        for y in 0..=self.height {
+            for x in 0..=self.width {
+                write!(f, "{}", self.risks[y][x])?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
 
 impl Eq for Position {}
 
@@ -172,17 +209,24 @@ mod tests {
     }
 
     #[test]
+    fn test_input_test_expand() {
+        let mut grid = Grid::parse_input(include_str!("../input-test"));
+        grid.expand();
+        assert_eq!(grid.to_string(), include_str!("../input-test-part2"));
+    }
+
+    #[test]
     fn test_input_test() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input-test"));
+        let (part1_answer, part2_answer) = run(include_str!("../input-test"));
         assert_eq!(part1_answer, 40);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 315);
     }
 
     #[test]
     fn test_input_own() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input"));
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 696);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 2952);
     }
 
     #[bench]
