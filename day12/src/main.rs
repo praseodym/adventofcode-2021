@@ -9,7 +9,7 @@ type Cave = u16;
 #[derive(Default, Debug)]
 struct Caves {
     caves: HashMap<&'static str, Cave>,
-    small_caves: Vec<Cave>,
+    small_caves: Vec<bool>,
     next: Vec<Vec<Cave>>,
 }
 
@@ -29,8 +29,7 @@ fn run(input: &'static str) -> (usize, usize) {
         caves.add_next(v, u);
     });
 
-    let start = caves.start();
-    caves.visit(start, Default::default(), true)
+    caves.visit(caves.start(), Default::default(), true)
 }
 
 impl Caves {
@@ -53,9 +52,8 @@ impl Caves {
                 let cave = self.next.len() as Cave;
                 self.caves.insert(name, cave);
                 self.next.push(Vec::new());
-                if name.chars().next().unwrap().is_lowercase() {
-                    self.small_caves.push(cave);
-                }
+                let small_cave = name.chars().next().unwrap().is_lowercase();
+                self.small_caves.push(small_cave);
                 cave
             }
         }
@@ -66,7 +64,7 @@ impl Caves {
     }
 
     fn is_small(&self, cave: Cave) -> bool {
-        self.small_caves.contains(&cave)
+        *self.small_caves.get(cave as usize).unwrap()
     }
 
     fn visit(&self, cave: Cave, visited: &[Cave], double_allowed: bool) -> (usize, usize) {
@@ -85,7 +83,7 @@ impl Caves {
         }
         for &next in next_caves.iter() {
             let mut double_allowed = double_allowed;
-            if visited.contains(&next) {
+            if self.is_small(next) && visited.contains(&next) {
                 if double_allowed {
                     double_allowed = false;
                 } else {
