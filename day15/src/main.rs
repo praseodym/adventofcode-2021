@@ -8,12 +8,11 @@ use std::fmt::Formatter;
 use std::hash::{Hash, Hasher};
 use std::{cmp, fmt};
 
-const N: usize = 500; // x direction
-const M: usize = 500; // y direction
+const N: usize = 500;
 type Risk = u16;
 #[derive(Debug)]
 struct Grid {
-    risks: [[Risk; N]; M],
+    risks: [[u8; N]; N],
     width: usize,
     height: usize,
 }
@@ -41,7 +40,7 @@ fn run(input: &'static str) -> (u16, u16) {
 impl Grid {
     fn parse_input(input: &str) -> Grid {
         let mut grid: Grid = Grid {
-            risks: [[0u16; M]; N],
+            risks: [[0; N]; N],
             width: 0,
             height: 0,
         };
@@ -49,7 +48,7 @@ impl Grid {
         for (y, line) in input.enumerate() {
             for (x, d) in line
                 .chars()
-                .map(|c| c.to_digit(10).unwrap() as Risk)
+                .map(|c| c.to_digit(10).unwrap() as u8)
                 .enumerate()
             {
                 grid.width = cmp::max(x, grid.width);
@@ -71,10 +70,7 @@ impl Grid {
                 let ddx = (self.width + 1) * dx;
                 for y in 0..=self.height {
                     for x in 0..=self.height {
-                        let mut r = self.risks[y][x] + dx as u16 + dy as u16;
-                        if r > 9 {
-                            r -= 9;
-                        }
+                        let r = (self.risks[y][x] + dx as u8 + dy as u8 - 1) % 9 + 1;
                         self.risks[ddy + y][ddx + x] = r;
                     }
                 }
@@ -90,9 +86,7 @@ impl Grid {
         let mut visited = HashSet::new();
         let mut to_visit: BinaryHeap<Position> = BinaryHeap::new();
 
-        let adj = self.get_adjacent(Default::default());
-        adj.iter().for_each(|p| to_visit.push(*p));
-
+        to_visit.push(Default::default());
         while let Some(p) = to_visit.pop() {
             if !visited.insert(p) {
                 continue;
@@ -121,7 +115,7 @@ impl Grid {
             }
         }
 
-        panic!("no valid route found");
+        panic!("no route found");
     }
 
     // "you cannot move diagonally"
@@ -132,25 +126,25 @@ impl Grid {
         if x != 0 {
             let x = x - 1;
             let y = y;
-            let risk = self.risks[x][y];
+            let risk = self.risks[x][y] as Risk;
             ret.push(Position { x, y, risk })
         }
         if x != self.width {
             let x = x + 1;
             let y = y;
-            let risk = self.risks[x][y];
+            let risk = self.risks[x][y] as Risk;
             ret.push(Position { x, y, risk })
         }
         if y != 0 {
             let x = x;
             let y = y - 1;
-            let risk = self.risks[x][y];
+            let risk = self.risks[x][y] as Risk;
             ret.push(Position { x, y, risk })
         }
         if y != self.height {
             let x = x;
             let y = y + 1;
-            let risk = self.risks[x][y];
+            let risk = self.risks[x][y] as Risk;
             ret.push(Position { x, y, risk })
         }
         ret
