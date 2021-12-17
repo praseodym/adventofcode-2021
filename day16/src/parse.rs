@@ -41,11 +41,9 @@ where
     fn parse(i: BitInput) -> BitResult<Self>;
 }
 
-// impl BitParsable for u4 {
-//     fn parse(i: BitInput) -> BitResult<Self> {
-//         map(take_bits(4_usize), Self::new)(i)
-//     }
-// }
+pub fn parse_bool(i: BitInput) -> BitResult<bool> {
+    map(take_bits(1_usize), |val: u8| val == 1)(i)
+}
 
 macro_rules! impl_bit_parsable_for_ux {
     ($width: expr) => {
@@ -73,9 +71,7 @@ where
     }
 }
 
-impl_bit_parsable_for_ux!(1);
 impl_bit_parsable_for_ux!(3);
 impl_bit_parsable_for_ux!(4);
-impl_bit_parsable_for_ux!(5);
 impl_bit_parsable_for_ux!(11);
 impl_bit_parsable_for_ux!(15);

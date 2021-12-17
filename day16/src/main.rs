@@ -7,7 +7,7 @@ use ux::*;
 
 use parse::BitParsable;
 
-use crate::parse::{remaining, BitInput, BitResult};
+use crate::parse::{parse_bool, remaining, BitInput, BitResult};
 
 mod parse;
 
@@ -15,19 +15,20 @@ mod parse;
 struct Packet {
     id: u3,
     version: u3,
+    literal: u64,
     subpackets: Vec<Packet>,
 }
 
 fn main() {
-    let (part1_answer, _part2_answer) = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
-    // println!("part 2 answer: {}", part2_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
-fn run(input: &'static str) -> (u16, u16) {
+fn run(input: &'static str) -> (u16, u64) {
     let p = Packet::parse_hex(input);
     let part1_answer = p.sum_versions();
-    let part2_answer = 0;
+    let part2_answer = p.value();
     (part1_answer, part2_answer)
 }
 
@@ -52,29 +53,22 @@ impl Packet {
         (i, packet.version) = u3::parse(i)?;
         (i, packet.id) = u3::parse(i)?;
 
-        // println!("version: {:?}", packet.version);
-        // println!("id: {:?}", packet.id);
-
         if packet.id == u3::new(4) {
-            // println!("parsing literal packet");
-            // TODO: properly parse literal value
-            loop {
-                let a;
-                (i, a) = u1::parse(i)?;
-                (i, _) = u4::parse(i)?;
-
-                if a == u1::new(0) {
-                    break;
-                }
+            let mut more = true;
+            let mut literal = 0;
+            while more {
+                (i, more) = parse_bool(i)?;
+                let l;
+                (i, l) = u4::parse(i)?;
+                let l = u64::from(l);
+                literal = (literal << 4) + l;
             }
+            packet.literal = literal;
         } else {
-            // println!("parsing operator packet, id {}", packet.id);
-
             let length_type_id;
-            (i, length_type_id) = u1::parse(i)?;
-            // println!("length_type_id {:?}", length_type_id);
+            (i, length_type_id) = parse_bool(i)?;
 
-            if length_type_id == u1::new(1) {
+            if length_type_id {
                 let num_subpackets;
                 (i, num_subpackets) = u11::parse(i)?;
                 let num_subpackets = u16::from(num_subpackets);
@@ -109,6 +103,41 @@ impl Packet {
                 .map(|p| p.sum_versions())
                 .sum::<u16>()
     }
+
+    fn value(&self) -> u64 {
+        let mut subvalues = self.subpackets.iter().map(|p| p.value());
+        match u8::from(self.id) {
+            0 => subvalues.sum(),
+            1 => subvalues.product(),
+            2 => subvalues.min().unwrap(),
+            3 => subvalues.max().unwrap(),
+            4 => self.literal,
+            5 => {
+                if subvalues.next().unwrap() > subvalues.next().unwrap() {
+                    1
+                } else {
+                    0
+                }
+            }
+            6 => {
+                if subvalues.next().unwrap() < subvalues.next().unwrap() {
+                    1
+                } else {
+                    0
+                }
+            }
+            7 => {
+                if subvalues.next().unwrap() == subvalues.next().unwrap() {
+                    1
+                } else {
+                    0
+                }
+            }
+            _ => {
+                panic!("unknown id: {:?}", self.id)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -124,6 +153,7 @@ mod tests {
 
         assert_eq!(p.version, u3::new(6));
         assert_eq!(p.id, u3::new(4));
+        assert_eq!(p.literal, 2021);
     }
 
     #[test]
@@ -134,6 +164,12 @@ mod tests {
         assert_eq!(p.version, u3::new(1));
         assert_eq!(p.id, u3::new(6));
         assert_eq!(p.subpackets.len(), 2);
+
+        let s = p.subpackets.get(0).unwrap();
+        assert_eq!(s.literal, 10);
+
+        let s = p.subpackets.get(1).unwrap();
+        assert_eq!(s.literal, 20);
     }
 
     #[test]
@@ -144,6 +180,15 @@ mod tests {
         assert_eq!(p.version, u3::new(7));
         assert_eq!(p.id, u3::new(3));
         assert_eq!(p.subpackets.len(), 3);
+
+        let s = p.subpackets.get(0).unwrap();
+        assert_eq!(s.literal, 1);
+
+        let s = p.subpackets.get(1).unwrap();
+        assert_eq!(s.literal, 2);
+
+        let s = p.subpackets.get(2).unwrap();
+        assert_eq!(s.literal, 3);
     }
 
     #[test]
@@ -162,6 +207,7 @@ mod tests {
 
         let s = s.subpackets.get(0).unwrap();
         assert_eq!(s.id, u3::new(4));
+        assert_eq!(s.version, u3::new(6));
 
         assert_eq!(p.sum_versions(), 16);
     }
@@ -216,10 +262,28 @@ mod tests {
     }
 
     #[test]
+    fn test_expressions() {
+        let testcases = vec![
+            ("C200B40A82", 3),
+            ("04005AC33890", 54),
+            ("880086C3E88112", 7),
+            ("CE00C43D881120", 9),
+            ("D8005AC2A8F0", 1),
+            ("F600BC2D8F", 0),
+            ("9C005AC2F8F0", 0),
+            ("9C0141080250320F1802104A08", 1),
+        ];
+        for testcase in testcases {
+            let p = Packet::parse_hex(testcase.0);
+            assert_eq!(p.value(), testcase.1);
+        }
+    }
+
+    #[test]
     fn test_input_own() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input"));
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 943);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 167737115857);
     }
 
     #[bench]
