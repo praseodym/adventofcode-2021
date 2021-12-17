@@ -2,7 +2,7 @@
 
 extern crate test;
 
-type TargetArea = ((i32, i32), (i32, i32));
+type TargetArea = ((isize, isize), (isize, isize));
 
 fn main() {
     let (part1_answer, part2_answer) = run(include_str!("../input"));
@@ -10,7 +10,7 @@ fn main() {
     println!("part 2 answer: {}", part2_answer);
 }
 
-fn run(input: &'static str) -> (i32, usize) {
+fn run(input: &'static str) -> (isize, usize) {
     let target = parse_input(input);
     let (part1_answer, part2_answer) = simulate_range(target);
     (part1_answer.unwrap(), part2_answer)
@@ -24,14 +24,14 @@ fn parse_input(input: &'static str) -> TargetArea {
         .split(", ");
     let mut x = s.next().unwrap().strip_prefix("x=").unwrap().split("..");
     let mut y = s.next().unwrap().strip_prefix("y=").unwrap().split("..");
-    let x1: i32 = x.next().unwrap().parse().unwrap();
-    let x2: i32 = x.next().unwrap().parse().unwrap();
-    let y1: i32 = y.next().unwrap().parse().unwrap();
-    let y2: i32 = y.next().unwrap().parse().unwrap();
+    let x1: isize = x.next().unwrap().parse().unwrap();
+    let x2: isize = x.next().unwrap().parse().unwrap();
+    let y1: isize = y.next().unwrap().parse().unwrap();
+    let y2: isize = y.next().unwrap().parse().unwrap();
     ((x1, x2), (y1, y2))
 }
 
-fn simulate(velocity: (i32, i32), target: TargetArea) -> Option<i32> {
+fn simulate(velocity: (isize, isize), target: TargetArea) -> Option<isize> {
     let mut dx = velocity.0;
     let mut dy = velocity.1;
     let mut x = 0;
@@ -61,11 +61,16 @@ fn simulate(velocity: (i32, i32), target: TargetArea) -> Option<i32> {
         if x >= target.0 .0 && x <= target.0 .1 && y >= target.1 .0 && y <= target.1 .1 {
             return Some(max_y);
         }
+
+        // Missed target
+        if x >= target.0.1 && y >= target.1.1 {
+            return None
+        }
     }
     None
 }
 
-fn simulate_range(target: TargetArea) -> (Option<i32>, usize) {
+fn simulate_range(target: TargetArea) -> (Option<isize>, usize) {
     let bound_x = std::cmp::max(target.0 .0.abs(), target.0 .1.abs()) + 1;
     let bound_y = std::cmp::max(target.1 .0.abs(), target.1 .1.abs()) + 1;
     let mut max_y = None;
