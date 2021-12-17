@@ -1,4 +1,5 @@
 #![feature(test)]
+#![feature(destructuring_assignment)]
 
 extern crate test;
 
