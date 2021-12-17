@@ -5,16 +5,15 @@ extern crate test;
 type TargetArea = ((i32, i32), (i32, i32));
 
 fn main() {
-    let (part1_answer, _part2_answer) = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
-    // println!("part 2 answer: {}", part2_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
 fn run(input: &'static str) -> (i32, usize) {
     let target = parse_input(input);
-    let part1_answer = max_y(target).unwrap();
-    let part2_answer = 0;
-    (part1_answer, part2_answer)
+    let (part1_answer, part2_answer) = simulate_range(target);
+    (part1_answer.unwrap(), part2_answer)
 }
 
 fn parse_input(input: &'static str) -> TargetArea {
@@ -38,10 +37,8 @@ fn simulate(velocity: (i32, i32), target: TargetArea) -> Option<i32> {
     let mut x = 0;
     let mut y = 0;
     let mut max_y = 0;
-    // println!("\nstarting simulation");
-    for _step in 0..250 {
-        // println!("step {}: x,y {},{} dx,dy {},{}", step, x, y, dx, dy);
 
+    for _step in 0..150 {
         // The probe's x position increases by its x velocity.
         x += dx;
         // The probe's y position increases by its y velocity.
@@ -62,21 +59,21 @@ fn simulate(velocity: (i32, i32), target: TargetArea) -> Option<i32> {
 
         // Check whether probe is in target area
         if x >= target.0 .0 && x <= target.0 .1 && y >= target.1 .0 && y <= target.1 .1 {
-            // println!("probe is in target area!");
-            // println!("step {}: x,y {},{} dx,dy {},{}", step, x, y, dx, dy);
             return Some(max_y);
         }
     }
     None
 }
 
-fn max_y(target: TargetArea) -> Option<i32> {
-    let bound_x = std::cmp::max(target.0.0.abs(), target.0.1.abs());
-    let bound_y = std::cmp::max(target.1.0.abs(), target.1.1.abs());
+fn simulate_range(target: TargetArea) -> (Option<i32>, usize) {
+    let bound_x = std::cmp::max(target.0 .0.abs(), target.0 .1.abs()) + 1;
+    let bound_y = std::cmp::max(target.1 .0.abs(), target.1 .1.abs()) + 1;
     let mut max_y = None;
+    let mut count = 0;
     for dx in -bound_x..bound_x {
         for dy in -bound_y..bound_y {
             if let Some(new_max_y) = simulate((dx, dy), target) {
+                count += 1;
                 max_y = match max_y {
                     Some(old_max_y) => Some(std::cmp::max(old_max_y, new_max_y)),
                     None => Some(new_max_y),
@@ -84,7 +81,7 @@ fn max_y(target: TargetArea) -> Option<i32> {
             }
         }
     }
-    max_y
+    (max_y, count)
 }
 
 #[cfg(test)]
@@ -125,16 +122,16 @@ mod tests {
 
     #[test]
     fn test_input_test() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input-test"));
+        let (part1_answer, part2_answer) = run(include_str!("../input-test"));
         assert_eq!(part1_answer, 45);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 112);
     }
 
     #[test]
     fn test_input_own() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input"));
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 2775);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 1566);
     }
 
     #[bench]
