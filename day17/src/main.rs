@@ -63,8 +63,8 @@ fn simulate(velocity: (isize, isize), target: TargetArea) -> Option<isize> {
         }
 
         // Missed target
-        if x >= target.0.1 && y >= target.1.1 {
-            return None
+        if x >= target.0 .1 && y >= target.1 .1 {
+            return None;
         }
     }
     None
@@ -75,7 +75,7 @@ fn simulate_range(target: TargetArea) -> (Option<isize>, usize) {
     let bound_y = std::cmp::max(target.1 .0.abs(), target.1 .1.abs()) + 1;
     let mut max_y = None;
     let mut count = 0;
-    for dx in -bound_x..bound_x {
+    for dx in 0..bound_x {
         for dy in -bound_y..bound_y {
             if let Some(new_max_y) = simulate((dx, dy), target) {
                 count += 1;
