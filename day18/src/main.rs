@@ -4,28 +4,28 @@
 
 extern crate test;
 
-use std::collections::VecDeque;
+use itertools::Itertools;
 
 type Number = Vec<(usize, usize)>;
 
 fn main() {
-    let (part1_answer, _part2_answer) = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
-    // println!("part 2 answer: {}", part2_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
 fn run(input: &'static str) -> (usize, usize) {
-    let mut numbers = parse_input(input);
-    let part1_answer = magnitude(&sum(&mut numbers));
-    let part2_answer = 0;
+    let numbers = parse_input(input);
+    let part1_answer = magnitude(&sum(&numbers));
+    let part2_answer = max_magnitude(numbers);
     (part1_answer, part2_answer)
 }
 
-fn parse_input(input: &'static str) -> VecDeque<Number> {
-    let mut ret = VecDeque::new();
+fn parse_input(input: &'static str) -> Vec<Number> {
+    let mut ret = Vec::new();
     let input = input.trim_end().split('\n');
     for line in input {
-        ret.push_back(parse_line(line));
+        ret.push(parse_line(line));
     }
     ret
 }
@@ -44,14 +44,14 @@ fn parse_line(line: &str) -> Number {
     res
 }
 
-fn sum(numbers: &mut VecDeque<Number>) -> Number {
-    let mut res = numbers.pop_front().unwrap();
-    numbers.iter_mut().for_each(|x| add(&mut res, x));
+fn sum(numbers: &[Number]) -> Number {
+    let mut res = numbers[0].clone();
+    numbers.iter().skip(1).for_each(|x| add(&mut res, x));
     res
 }
 
-fn add(a: &mut Number, b: &mut Number) {
-    a.append(b);
+fn add(a: &mut Number, b: &Number) {
+    a.append(&mut b.clone());
     a.iter_mut().for_each(|x| x.1 += 1);
     reduce(a);
 }
@@ -103,6 +103,15 @@ fn magnitude(number: &Number) -> usize {
         }
     }
     n[0].0
+}
+
+fn max_magnitude(numbers: Vec<Number>) -> usize {
+    numbers
+        .into_iter()
+        .permutations(2)
+        .map(|v| magnitude(&sum(&v)))
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -197,8 +206,8 @@ mod tests {
 
     #[test]
     fn test_example1() {
-        let mut v = parse_input(include_str!("../input-test1"));
-        let n = sum(&mut v);
+        let v = parse_input(include_str!("../input-test1"));
+        let n = sum(&v);
         assert_eq!(
             n,
             parse_line("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
@@ -207,20 +216,21 @@ mod tests {
 
     #[test]
     fn test_example2() {
-        let mut v = parse_input(include_str!("../input-test2"));
-        let n = sum(&mut v);
+        let v = parse_input(include_str!("../input-test2"));
+        let n = sum(&v);
         assert_eq!(
             n,
             parse_line("[[[[6,6],[7,6]],[[7,7],[7,0]]],[[[7,7],[7,7]],[[7,8],[9,9]]]]")
         );
         assert_eq!(magnitude(&n), 4140);
+        assert_eq!(max_magnitude(v), 3993);
     }
 
     #[test]
     fn test_input_own() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input"));
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 3935);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 4669);
     }
 
     #[bench]
