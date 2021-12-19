@@ -3,21 +3,20 @@
 
 extern crate test;
 
+use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 
 type Coordinate = (isize, isize, isize);
 
 fn main() {
-    let (part1_answer, _part2_answer) = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
-    // println!("part 2 answer: {}", part2_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
 fn run(input: &'static str) -> (usize, usize) {
     let mut scanners = parse_input(input);
-    let part1_answer = reduce(&mut scanners);
-    let part2_answer = 0;
-    (part1_answer, part2_answer)
+    reduce(&mut scanners)
 }
 
 fn parse_input(input: &'static str) -> Vec<Vec<Coordinate>> {
@@ -76,8 +75,9 @@ fn rotate_all(beacons: &[Coordinate], rotation: u8) -> Vec<Coordinate> {
     beacons.iter().map(|b| rotate(b, rotation)).collect()
 }
 
-fn reduce(scanners: &mut Vec<Vec<Coordinate>>) -> usize {
+fn reduce(scanners: &mut Vec<Vec<Coordinate>>) -> (usize, usize) {
     let mut base: HashSet<Coordinate> = HashSet::from_iter(scanners.remove(0).iter().cloned());
+    let mut positions = vec![(0, 0, 0)];
     while !scanners.is_empty() {
         let mut progress = false;
         scanners.drain_filter(|scanner| {
@@ -96,6 +96,7 @@ fn reduce(scanners: &mut Vec<Vec<Coordinate>>) -> usize {
                     for s in &rotated {
                         base.insert((s.0 + d.0, s.1 + d.1, s.2 + d.2));
                     }
+                    positions.push(*d);
                     progress = true;
                     return true;
                 }
@@ -104,7 +105,19 @@ fn reduce(scanners: &mut Vec<Vec<Coordinate>>) -> usize {
         });
         assert!(progress, "made no progress in reduction phase");
     }
-    base.len()
+    (
+        base.len(),
+        positions
+            .into_iter()
+            .permutations(2)
+            .map(|v| manhattan_distance(v.get(0).unwrap(), v.get(1).unwrap()))
+            .max()
+            .unwrap(),
+    )
+}
+
+fn manhattan_distance(a: &Coordinate, b: &Coordinate) -> usize {
+    (a.0 - b.0).abs() as usize + (a.1 - b.1).abs() as usize + (a.2 - b.2).abs() as usize
 }
 
 #[cfg(test)]
@@ -123,15 +136,16 @@ mod tests {
     fn test_example2() {
         let mut scanners = parse_input(include_str!("../input-example2"));
         assert_eq!(scanners.len(), 5);
-        let n = reduce(&mut scanners);
-        assert_eq!(n, 79);
+        let (num_beacons, max_distance) = reduce(&mut scanners);
+        assert_eq!(num_beacons, 79);
+        assert_eq!(max_distance, 3621);
     }
 
     #[test]
     fn test_input_own() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input"));
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 335);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 10864);
     }
 
     #[bench]
