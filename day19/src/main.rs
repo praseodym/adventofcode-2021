@@ -4,7 +4,7 @@
 extern crate test;
 
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 type Coordinate = (isize, isize, isize);
 
@@ -76,14 +76,14 @@ fn rotate_all(beacons: &[Coordinate], rotation: u8) -> Vec<Coordinate> {
 }
 
 fn reduce(scanners: &mut Vec<Vec<Coordinate>>) -> (usize, usize) {
-    let mut base: HashSet<Coordinate> = HashSet::from_iter(scanners.remove(0).iter().cloned());
+    let mut base: FxHashSet<Coordinate> = FxHashSet::from_iter(scanners.remove(0).iter().cloned());
     let mut positions = vec![(0, 0, 0)];
     while !scanners.is_empty() {
         let mut progress = false;
         scanners.drain_filter(|scanner| {
             for r in 0..24 {
                 let rotated = rotate_all(scanner, r);
-                let mut distances: HashMap<Coordinate, usize> = HashMap::new();
+                let mut distances: FxHashMap<Coordinate, usize> = FxHashMap::default();
                 for b in &rotated {
                     for s in &base {
                         let distance = (s.0 - b.0, s.1 - b.1, s.2 - b.2);
