@@ -99,18 +99,15 @@ impl Image {
         let x = x;
         let y = y;
         let i = &self.image;
-        let pixels = [
-            i[y - 1][x - 1],
-            i[y - 1][x],
-            i[y - 1][x + 1],
-            i[y][x - 1],
-            i[y][x],
-            i[y][x + 1],
-            i[y + 1][x - 1],
-            i[y + 1][x],
-            i[y + 1][x + 1],
-        ];
-        let e = pixels_to_number(&pixels);
+        let e = ((i[y - 1][x - 1] as usize) << 8)
+            + ((i[y - 1][x] as usize) << 7)
+            + ((i[y - 1][x + 1] as usize) << 6)
+            + ((i[y][x - 1] as usize) << 5)
+            + ((i[y][x] as usize) << 4)
+            + ((i[y][x + 1] as usize) << 3)
+            + ((i[y + 1][x - 1] as usize) << 2)
+            + ((i[y + 1][x] as usize) << 1)
+            + (i[y + 1][x + 1] as usize);
         self.enhancement[e]
     }
 
@@ -136,18 +133,6 @@ impl Image {
     }
 }
 
-#[inline]
-#[allow(clippy::needless_range_loop)]
-pub fn pixels_to_number(pixels: &[bool]) -> usize {
-    debug_assert_eq!(pixels.len(), 9);
-    let mut n = 0;
-    // range loop is way faster than iterating
-    for i in 0..9 {
-        n += (pixels[i] as usize) << (8 - i)
-    }
-    n
-}
-
 impl fmt::Display for Image {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln!(f, "size: {}, margin: {}", self.size, self.margin)?;
@@ -166,13 +151,6 @@ mod tests {
     use test::Bencher;
 
     use super::*;
-
-    #[test]
-    fn test_pixels_to_number() {
-        let pixel = [false, false, false, true, false, false, false, true, false];
-        let n = pixels_to_number(&pixel);
-        assert_eq!(n, 34);
-    }
 
     #[test]
     fn test_example() {
