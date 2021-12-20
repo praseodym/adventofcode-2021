@@ -6,7 +6,7 @@ use std::fmt;
 use std::fmt::Formatter;
 use std::ops::Range;
 
-const M: usize = 10;
+const M: usize = 54;
 const N: usize = 100 + 2 * M;
 
 #[derive(Debug)]
@@ -18,16 +18,19 @@ struct Image {
 }
 
 fn main() {
-    let (part1_answer, _part2_answer) = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
-    // println!("part 2 answer: {}", part2_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
 fn run(input: &'static str) -> (usize, usize) {
-    let image = parse_input(input);
-    let enhanced = image.enhance_image().enhance_image();
-    let part1_answer = enhanced.count_lit();
-    let part2_answer = 0;
+    let mut image = parse_input(input);
+    image = image.enhance_image().enhance_image();
+    let part1_answer = image.count_lit();
+    for _ in 3..=50 {
+        image = image.enhance_image();
+    }
+    let part2_answer = image.count_lit();
     (part1_answer, part2_answer)
 }
 
@@ -183,9 +186,9 @@ mod tests {
 
     #[test]
     fn test_run_example() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input-example1"));
+        let (part1_answer, part2_answer) = run(include_str!("../input-example1"));
         assert_eq!(part1_answer, 35);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 3351);
     }
 
     #[test]
