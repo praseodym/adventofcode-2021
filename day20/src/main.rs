@@ -94,6 +94,7 @@ impl Image {
         n
     }
 
+    #[inline]
     pub fn enhance_pixel(&self, x: usize, y: usize) -> bool {
         let x = x;
         let y = y;
@@ -135,13 +136,14 @@ impl Image {
     }
 }
 
+#[inline]
+#[allow(clippy::needless_range_loop)]
 pub fn pixels_to_number(pixels: &[bool]) -> usize {
     debug_assert_eq!(pixels.len(), 9);
     let mut n = 0;
-    for (i, &b) in pixels.iter().enumerate() {
-        if b {
-            n += 1 << (8 - i)
-        }
+    // range loop is way faster than iterating
+    for i in 0..9 {
+        n += (pixels[i] as usize) << (8 - i)
     }
     n
 }
@@ -149,8 +151,8 @@ pub fn pixels_to_number(pixels: &[bool]) -> usize {
 impl fmt::Display for Image {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln!(f, "size: {}, margin: {}", self.size, self.margin)?;
-        for y in self.margin - 1..self.size + self.margin - 1 {
-            for x in self.margin - 1..self.size + self.margin - 1 {
+        for y in self.range() {
+            for x in self.range() {
                 write!(f, "{}", if self.image[y][x] { '#' } else { '.' })?;
             }
             writeln!(f)?;
@@ -193,9 +195,9 @@ mod tests {
 
     #[test]
     fn test_run_own() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input"));
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 5249);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 15714);
     }
 
     #[bench]
