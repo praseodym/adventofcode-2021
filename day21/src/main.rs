@@ -2,7 +2,6 @@
 
 extern crate test;
 
-use std::collections::HashMap;
 use std::collections::VecDeque;
 
 fn main() {
@@ -55,23 +54,24 @@ fn part1(start: (usize, usize)) -> usize {
 }
 
 fn part2(start: (usize, usize)) -> usize {
-    let dice_freq = dirac_dice_freq();
+    let dice_freq = [0, 0, 0, 1, 3, 6, 7, 6, 3, 1];
     let mut wins: [usize; 2] = [0, 0];
     let mut q: VecDeque<DiracState> = VecDeque::new();
     q.push_back(DiracState {
         cur_player: 0,
         universes: 1,
-        pos: [start.0, start.1],
+        pos: [start.0 - 1, start.1 - 1],
         score: [0, 0],
     });
 
     while let Some(state) = q.pop_front() {
-        for (roll, freq) in &dice_freq {
-            let universes = state.universes * freq;
-            let mut pos = state.pos.clone();
-            let mut score = state.score.clone();
-            pos[state.cur_player] = (state.pos[state.cur_player] + roll - 1) % 10 + 1;
-            score[state.cur_player] += pos[state.cur_player];
+        #[allow(clippy::needless_range_loop)]
+        for roll in 3..=9 {
+            let universes = state.universes * dice_freq[roll];
+            let mut pos = state.pos;
+            let mut score = state.score;
+            pos[state.cur_player] = (state.pos[state.cur_player] + roll) % 10;
+            score[state.cur_player] += pos[state.cur_player] + 1;
             if score[state.cur_player] >= 21 {
                 wins[state.cur_player] += universes;
                 continue;
@@ -94,18 +94,6 @@ struct DiracState {
     universes: usize,
     pos: [usize; 2],
     score: [usize; 2],
-}
-
-fn dirac_dice_freq() -> HashMap<usize, usize> {
-    let mut freq: HashMap<usize, usize> = HashMap::new();
-    for a in 1..=3 {
-        for b in 1..=3 {
-            for c in 1..=3 {
-                *freq.entry(a + b + c).or_default() += 1;
-            }
-        }
-    }
-    freq
 }
 
 #[derive(Debug, Default)]
