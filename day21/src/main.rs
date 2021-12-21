@@ -2,16 +2,19 @@
 
 extern crate test;
 
+use std::collections::HashMap;
+use std::collections::VecDeque;
+
 fn main() {
-    let (part1_answer, _part2_answer) = run(include_str!("../input"));
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
     println!("part 1 answer: {}", part1_answer);
-    // println!("part 2 answer: {}", part2_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
 fn run(input: &'static str) -> (usize, usize) {
     let start = parse_input(input);
     let part1_answer = part1(start);
-    let part2_answer = 0;
+    let part2_answer = part2(start);
     (part1_answer, part2_answer)
 }
 
@@ -51,6 +54,60 @@ fn part1(start: (usize, usize)) -> usize {
     }
 }
 
+fn part2(start: (usize, usize)) -> usize {
+    let dice_freq = dirac_dice_freq();
+    let mut wins: [usize; 2] = [0, 0];
+    let mut q: VecDeque<DiracState> = VecDeque::new();
+    q.push_back(DiracState {
+        cur_player: 0,
+        universes: 1,
+        pos: [start.0, start.1],
+        score: [0, 0],
+    });
+
+    while let Some(state) = q.pop_front() {
+        for (roll, freq) in &dice_freq {
+            let universes = state.universes * freq;
+            let mut pos = state.pos.clone();
+            let mut score = state.score.clone();
+            pos[state.cur_player] = (state.pos[state.cur_player] + roll - 1) % 10 + 1;
+            score[state.cur_player] += pos[state.cur_player];
+            if score[state.cur_player] >= 21 {
+                wins[state.cur_player] += universes;
+                continue;
+            }
+            q.push_back(DiracState {
+                cur_player: (state.cur_player + 1) % 2,
+                universes,
+                pos,
+                score,
+            })
+        }
+    }
+
+    std::cmp::max(wins[0], wins[1])
+}
+
+#[derive(Debug, Default)]
+struct DiracState {
+    cur_player: usize,
+    universes: usize,
+    pos: [usize; 2],
+    score: [usize; 2],
+}
+
+fn dirac_dice_freq() -> HashMap<usize, usize> {
+    let mut freq: HashMap<usize, usize> = HashMap::new();
+    for a in 1..=3 {
+        for b in 1..=3 {
+            for c in 1..=3 {
+                *freq.entry(a + b + c).or_default() += 1;
+            }
+        }
+    }
+    freq
+}
+
 #[derive(Debug, Default)]
 struct DeterministicDie {
     state: usize,
@@ -87,16 +144,16 @@ mod tests {
 
     #[test]
     fn test_input_example() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input-example"));
+        let (part1_answer, part2_answer) = run(include_str!("../input-example"));
         assert_eq!(part1_answer, 739785);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 444356092776315);
     }
 
     #[test]
     fn test_input_own() {
-        let (part1_answer, _part2_answer) = run(include_str!("../input"));
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 1196172);
-        // assert_eq!(part2_answer, 0);
+        assert_eq!(part2_answer, 106768284484217);
     }
 
     #[bench]
