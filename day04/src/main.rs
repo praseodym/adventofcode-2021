@@ -1,5 +1,3 @@
-#![feature(drain_filter)]
-
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::time::Instant;
@@ -38,15 +36,15 @@ fn main() {
     let mut first = None;
     let mut last = 0;
     for draw in draws {
-        cards.drain_filter(|card| {
+        cards.retain_mut(|card| {
             if let Some(score) = card.mark(draw) {
                 if first.is_none() {
                     first = Some(score)
                 }
                 last = score;
-                true
-            } else {
                 false
+            } else {
+                true
             }
         });
     }

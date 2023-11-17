@@ -1,9 +1,3 @@
-#![feature(test)]
-#![feature(array_windows)]
-#![feature(int_roundings)]
-
-extern crate test;
-
 use itertools::Itertools;
 
 type Number = Vec<(usize, usize)>;
@@ -61,17 +55,22 @@ fn reduce(a: &mut Number) {
 }
 
 fn explode(number: &mut Number) -> bool {
-    for (i, &[(a, v), (b, w)]) in number.clone().array_windows().enumerate() {
-        if v == 5 && w == 5 {
-            if i != 0 {
-                number.get_mut(i - 1).unwrap().0 += a;
+    let len = number.len();
+    for i in 0..len {
+        if i + 1 < len {
+            let (a, v) = number[i];
+            let (b, w) = number[i + 1];
+            if v == 5 && w == 5 {
+                if i != 0 {
+                    number[i - 1].0 += a;
+                }
+                if len > i + 2 {
+                    number[i + 2].0 += b;
+                }
+                number.drain(i..i + 2);
+                number.insert(i, (0, 4));
+                return true;
             }
-            if number.len() > i + 2 {
-                number.get_mut(i + 2).unwrap().0 += b;
-            }
-            number.drain(i..i + 2);
-            number.insert(i, (0, 4));
-            return true;
         }
     }
     false
@@ -80,8 +79,10 @@ fn explode(number: &mut Number) -> bool {
 fn split(number: &mut Number) -> bool {
     for (i, (a, n)) in number.clone().iter().enumerate() {
         if *a >= 10 {
-            number[i] = (a.unstable_div_ceil(2), n + 1);
-            number.insert(i, (a.unstable_div_floor(2), n + 1));
+            let half = *a / 2;
+            let remainder = *a % 2;
+            number[i] = (half + remainder, n + 1);
+            number.insert(i, (half, n + 1));
             return true;
         }
     }
@@ -92,11 +93,16 @@ fn magnitude(number: &Number) -> usize {
     let mut n = number.clone();
     for depth in (1..=4).rev() {
         'depth: loop {
-            for (i, &[(a, v), (b, w)]) in n.clone().array_windows().enumerate() {
-                if v == depth && w == depth {
-                    n[i] = (3 * a + 2 * b, depth - 1);
-                    n.remove(i + 1);
-                    continue 'depth;
+            let len = n.len();
+            for i in 0..len {
+                if i + 1 < len {
+                    let (a, v) = n[i];
+                    let (b, w) = n[i + 1];
+                    if v == depth && w == depth {
+                        n[i] = (3 * a + 2 * b, depth - 1);
+                        n.remove(i + 1);
+                        continue 'depth;
+                    }
                 }
             }
             break;
@@ -116,8 +122,6 @@ fn max_magnitude(numbers: Vec<Number>) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use test::Bencher;
-
     use super::*;
 
     #[test]
@@ -174,7 +178,7 @@ mod tests {
     #[test]
     fn test_add() {
         let a = &mut parse_line("[[[[4,3],4],4],[7,[[8,4],9]]]");
-        add(a, &mut parse_line("[1,1]"));
+        add(a, &parse_line("[1,1]"));
         reduce(a);
         assert_eq!(*a, parse_line("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"));
     }
@@ -182,7 +186,7 @@ mod tests {
     #[test]
     fn test_reduce() {
         let a = &mut parse_line("[1,2]");
-        add(a, &mut parse_line("[[3,4],5]"));
+        add(a, &parse_line("[[3,4],5]"));
         assert_eq!(*a, parse_line("[[1,2],[[3,4],5]]"));
     }
 
@@ -231,11 +235,5 @@ mod tests {
         let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 3935);
         assert_eq!(part2_answer, 4669);
-    }
-
-    #[bench]
-    fn bench(b: &mut Bencher) {
-        let input = include_str!("../input");
-        b.iter(|| run(input));
     }
 }

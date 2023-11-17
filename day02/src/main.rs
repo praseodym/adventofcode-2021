@@ -1,9 +1,5 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
 fn main() {
-    let file = File::open("input").unwrap();
-    let reader = BufReader::new(file);
+    let input = include_str!("../input");
 
     let mut depth = 0;
     let mut horizontal = 0;
@@ -11,8 +7,8 @@ fn main() {
     let mut aim = 0;
     let mut depth_new = 0;
 
-    for (_, line) in reader.lines().enumerate() {
-        let cmd = line.unwrap();
+    for (_, line) in input.lines().enumerate() {
+        let cmd = line;
         let cmd: Vec<&str> = cmd.split_whitespace().collect();
         let units = cmd[1].parse::<i32>().unwrap();
         let direction = cmd[0];

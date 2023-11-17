@@ -1,8 +1,3 @@
-#![feature(test)]
-#![feature(drain_filter)]
-
-extern crate test;
-
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -80,7 +75,7 @@ fn reduce(scanners: &mut Vec<Vec<Coordinate>>) -> (usize, usize) {
     let mut positions = vec![(0, 0, 0)];
     while !scanners.is_empty() {
         let mut progress = false;
-        scanners.drain_filter(|scanner| {
+        scanners.retain(|scanner| {
             for r in 0..24 {
                 let rotated = rotate_all(scanner, r);
                 let mut distances: FxHashMap<Coordinate, usize> = FxHashMap::default();
@@ -98,10 +93,10 @@ fn reduce(scanners: &mut Vec<Vec<Coordinate>>) -> (usize, usize) {
                     }
                     positions.push(*d);
                     progress = true;
-                    return true;
+                    return false;
                 }
             }
-            false
+            true
         });
         assert!(progress, "made no progress in reduction phase");
     }
@@ -122,8 +117,6 @@ fn manhattan_distance(a: &Coordinate, b: &Coordinate) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use test::Bencher;
-
     use super::*;
 
     #[test]
@@ -146,11 +139,5 @@ mod tests {
         let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 335);
         assert_eq!(part2_answer, 10864);
-    }
-
-    #[bench]
-    fn bench(b: &mut Bencher) {
-        let input = include_str!("../input");
-        b.iter(|| run(input));
     }
 }

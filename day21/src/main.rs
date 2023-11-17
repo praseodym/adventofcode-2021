@@ -1,7 +1,3 @@
-#![feature(test)]
-
-extern crate test;
-
 use std::collections::VecDeque;
 
 fn main() {
@@ -119,8 +115,6 @@ impl DeterministicDie {
 
 #[cfg(test)]
 mod tests {
-    use test::Bencher;
-
     use super::*;
 
     #[test]
@@ -142,11 +136,5 @@ mod tests {
         let (part1_answer, part2_answer) = run(include_str!("../input"));
         assert_eq!(part1_answer, 1196172);
         assert_eq!(part2_answer, 106768284484217);
-    }
-
-    #[bench]
-    fn bench(b: &mut Bencher) {
-        let input = include_str!("../input");
-        b.iter(|| run(input));
     }
 }

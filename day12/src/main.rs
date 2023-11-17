@@ -1,7 +1,3 @@
-#![feature(test)]
-
-extern crate test;
-
 use std::collections::HashMap;
 
 type Cave = u16;
@@ -100,8 +96,6 @@ impl Caves {
 
 #[cfg(test)]
 mod tests {
-    use test::Bencher;
-
     use super::*;
 
     #[test]
@@ -130,11 +124,5 @@ mod tests {
         let (paths_part1, paths_part2) = run(include_str!("../input"));
         assert_eq!(paths_part1, 5958);
         assert_eq!(paths_part2, 150426);
-    }
-
-    #[bench]
-    fn bench(b: &mut Bencher) {
-        let input = include_str!("../input");
-        b.iter(|| run(input));
     }
 }

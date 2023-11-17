@@ -1,72 +1,50 @@
-#![feature(test)]
-#![feature(array_windows)]
-
-extern crate test;
-
-use std::error::Error;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let measurements = read_measurements();
-    let increments_1 = first(&measurements);
-    let increments_2 = second(&measurements);
-
-    assert_eq!(increments_1, 1167);
-    assert_eq!(increments_2, 1130);
-    println!("First answer:  {}", increments_1);
-    println!("Second answer: {}", increments_2);
-
-    Result::Ok(())
+fn main() {
+    let (part1_answer, part2_answer) = run(include_str!("../input"));
+    println!("part 1 answer: {}", part1_answer);
+    println!("part 2 answer: {}", part2_answer);
 }
 
-fn read_measurements() -> Vec<i32> {
-    let file = File::open("input").unwrap();
-    let reader = BufReader::new(file);
+fn run(input: &'static str) -> (usize, usize) {
+    let mut previous_measurement = None;
+    let mut increments_1 = 0;
+    let mut increments_2 = 0;
+    let mut sliding_window = std::collections::VecDeque::new();
 
-    reader
-        .lines()
-        .map(|line_str| line_str.unwrap().parse::<i32>().unwrap())
-        .collect()
-}
+    for (_, line) in input.lines().enumerate() {
+        let new_measurement = line.parse::<i32>().unwrap();
 
-fn first(measurements: &[i32]) -> i32 {
-    measurements
-        .array_windows()
-        .map(|&[a, b]| if b > a { 1 } else { 0 })
-        .sum::<i32>()
-}
+        // First strategy
+        if let Some(d) = previous_measurement {
+            if new_measurement > d {
+                increments_1 += 1;
+            }
+        }
+        previous_measurement = Some(new_measurement);
 
-fn second(measurements: &[i32]) -> i32 {
-    measurements
-        .array_windows::<3>()
-        .map(|w| w.iter().sum())
-        .collect::<Vec<i32>>()
-        .array_windows()
-        .map(|&[a, b]| if b > a { 1 } else { 0 })
-        .sum::<i32>()
+        // Second strategy with sliding window
+        if sliding_window.len() == 3 {
+            let first_sum: i32 = sliding_window.iter().sum();
+            sliding_window.pop_front();
+            sliding_window.push_back(new_measurement);
+            let second_sum: i32 = sliding_window.iter().sum();
+            if second_sum > first_sum {
+                increments_2 += 1;
+            }
+        } else {
+            sliding_window.push_back(new_measurement);
+        };
+    }
+    (increments_1, increments_2)
 }
 
 #[cfg(test)]
 mod tests {
-    use test::Bencher;
-
     use super::*;
 
-    #[bench]
-    fn bench_main(b: &mut Bencher) {
-        b.iter(main);
-    }
-
-    #[bench]
-    fn bench_first(b: &mut Bencher) {
-        let measurements = read_measurements();
-        b.iter(|| first(&measurements));
-    }
-
-    #[bench]
-    fn bench_second(b: &mut Bencher) {
-        let measurements = read_measurements();
-        b.iter(|| second(&measurements));
+    #[test]
+    fn test_run() {
+        let (part1_answer, part2_answer) = run(include_str!("../input"));
+        assert_eq!(part1_answer, 1167);
+        assert_eq!(part2_answer, 1130);
     }
 }

@@ -1,7 +1,3 @@
-#![feature(test)]
-
-extern crate test;
-
 use std::fmt::Formatter;
 use std::{cmp, fmt};
 
@@ -139,8 +135,6 @@ impl fmt::Display for Paper {
 
 #[cfg(test)]
 mod tests {
-    use test::Bencher;
-
     use super::*;
 
     #[test]
@@ -182,11 +176,5 @@ mod tests {
         let (dots_part1, paper) = run(include_str!("../input"));
         assert_eq!(dots_part1, 747);
         assert_eq!(paper.to_string(), include_str!("../output"));
-    }
-
-    #[bench]
-    fn bench(b: &mut Bencher) {
-        let input = include_str!("../input");
-        b.iter(|| run(input));
     }
 }
